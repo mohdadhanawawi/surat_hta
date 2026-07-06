@@ -8,24 +8,26 @@ export interface SessionData {
   role: "ADMIN" | "STAFF";
 }
 
-const sessionPassword = process.env.SESSION_SECRET;
+function getSessionOptions() {
+  const sessionPassword = process.env.SESSION_SECRET;
 
-if (!sessionPassword || sessionPassword.length < 32) {
-  throw new Error(
-    "SESSION_SECRET env var mesti ditetapkan dan sekurang-kurangnya 32 aksara panjangnya."
-  );
+  if (!sessionPassword || sessionPassword.length < 32) {
+    throw new Error(
+      "SESSION_SECRET env var mesti ditetapkan dan sekurang-kurangnya 32 aksara panjangnya."
+    );
+  }
+
+  return {
+    password: sessionPassword,
+    cookieName: "surat_hta_session",
+    cookieOptions: {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 7 hari
+    },
+  };
 }
-
-export const sessionOptions = {
-  password: sessionPassword,
-  cookieName: "surat_hta_session",
-  cookieOptions: {
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 7, // 7 hari
-  },
-};
 
 export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
-  return getIronSession<SessionData>(cookieStore, sessionOptions);
+  return getIronSession<SessionData>(cookieStore, getSessionOptions());
 }
