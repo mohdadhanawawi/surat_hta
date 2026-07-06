@@ -41,15 +41,10 @@ tugaskan tindakan kepada staf.
 
    Masukkan nilai ini sebagai `SESSION_SECRET` dalam fail `.env`.
 
-3. Jalankan migration pangkalan data:
+3. Jalankan migration pangkalan data dan cipta akaun admin lalai:
 
    ```bash
    npx prisma migrate deploy
-   ```
-
-4. Cipta akaun admin lalai:
-
-   ```bash
    npm run seed
    ```
 
@@ -60,7 +55,7 @@ tugaskan tindakan kepada staf.
    **Tukar kata laluan ini selepas log masuk kali pertama** melalui halaman
    Pengurusan Pengguna.
 
-5. Jalankan server pembangunan:
+4. Jalankan server pembangunan:
 
    ```bash
    npm run dev
@@ -83,21 +78,20 @@ keperluan pangkalan data berasingan kerana menggunakan SQLite).
 
    ```bash
    npm install
-   npx prisma migrate deploy
    npm run build
    ```
 
-3. Cipta akaun admin (sekali sahaja, pada deployment pertama):
-
-   ```bash
-   npm run seed
-   ```
-
-4. Jalankan aplikasi:
+3. Jalankan aplikasi:
 
    ```bash
    npm run start
    ```
+
+   Skrip `start` menjalankan migration (`prisma migrate deploy`) dan
+   mencipta akaun admin lalai (`admin` / `admin123`, jika belum wujud)
+   secara automatik sebelum server bermula — tiada langkah manual
+   diperlukan pada deployment pertama. Log masuk dan **tukar kata laluan
+   admin dengan segera**.
 
    Disyorkan menggunakan process manager seperti `pm2` atau `systemd` untuk
    memastikan aplikasi sentiasa berjalan, dan reverse proxy (nginx) dengan
@@ -125,18 +119,13 @@ Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
 
    Path mesti berada di dalam `/data` (mount path Volume) supaya kekal
    selepas redeploy — bahagian lain sistem fail Railway bersifat sementara.
-6. Deploy. Skrip `start` (`prisma migrate deploy && next start`) akan
-   menjalankan migration secara automatik setiap kali aplikasi bermula.
-7. Cipta akaun admin (sekali sahaja): buka tab **Shell** pada servis di
-   Railway dan jalankan:
-
-   ```bash
-   npm run seed
-   ```
-
-8. Dapatkan URL awam: **Settings** → **Networking** → **Generate Domain**
+6. Deploy. Skrip `start` (`prisma migrate deploy && tsx prisma/seed.ts &&
+   next start`) akan menjalankan migration dan mencipta akaun admin lalai
+   secara automatik setiap kali aplikasi bermula — tiada keperluan untuk
+   akses Shell/Console Railway secara manual.
+7. Dapatkan URL awam: **Settings** → **Networking** → **Generate Domain**
    (atau tambah domain sendiri jika ada).
-9. Log masuk dengan `admin` / `admin123` dan **tukar kata laluan** segera
+8. Log masuk dengan `admin` / `admin123` dan **tukar kata laluan** segera
    melalui halaman Pengurusan Pengguna.
 
 ### Sandaran Data (Backup)
@@ -159,7 +148,7 @@ sandaran, salin secara berkala:
 ```bash
 npm run dev            # Server pembangunan
 npm run build           # Build untuk pengeluaran
-npm run start           # Jalankan build pengeluaran
+npm run start           # Migration + seed admin (jika belum wujud) + jalankan build pengeluaran
 npm run lint             # Semak kod dengan ESLint
 npm run seed             # Cipta akaun admin lalai (jika belum wujud)
 npx prisma studio        # GUI untuk lihat/edit data pangkalan data secara terus
