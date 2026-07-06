@@ -103,6 +103,42 @@ keperluan pangkalan data berasingan kerana menggunakan SQLite).
    memastikan aplikasi sentiasa berjalan, dan reverse proxy (nginx) dengan
    HTTPS di hadapannya.
 
+### Deploy ke Railway.app
+
+Railway sesuai kerana ia menyediakan **Volume** (storan cakera kekal) yang
+diperlukan untuk fail pangkalan data SQLite dan fail surat yang dimuat naik.
+Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
+
+1. Log masuk ke [railway.app](https://railway.app) menggunakan akaun GitHub.
+2. **New Project** → **Deploy from GitHub repo** → pilih repo `surat_hta`
+   (pilih branch `main` selepas PR digabungkan).
+3. Railway akan mengesan Next.js secara automatik dan menjalankan
+   `npm install` (yang turut menjalankan `prisma generate` melalui
+   `postinstall`) diikuti `npm run build`.
+4. Tambah **Volume**: pada servis tersebut, pergi ke tab **Settings** →
+   **Volumes** → **Add Volume**, tetapkan mount path kepada `/data`.
+5. Tetapkan **Variables** (Settings → Variables):
+   - `DATABASE_URL` = `file:/data/dev.db`
+   - `UPLOAD_DIR` = `/data/uploads`
+   - `SESSION_SECRET` = rentetan rawak 32+ aksara (jana dengan arahan di atas)
+   - `NODE_ENV` = `production`
+
+   Path mesti berada di dalam `/data` (mount path Volume) supaya kekal
+   selepas redeploy — bahagian lain sistem fail Railway bersifat sementara.
+6. Deploy. Skrip `start` (`prisma migrate deploy && next start`) akan
+   menjalankan migration secara automatik setiap kali aplikasi bermula.
+7. Cipta akaun admin (sekali sahaja): buka tab **Shell** pada servis di
+   Railway dan jalankan:
+
+   ```bash
+   npm run seed
+   ```
+
+8. Dapatkan URL awam: **Settings** → **Networking** → **Generate Domain**
+   (atau tambah domain sendiri jika ada).
+9. Log masuk dengan `admin` / `admin123` dan **tukar kata laluan** segera
+   melalui halaman Pengurusan Pengguna.
+
 ### Sandaran Data (Backup)
 
 Kerana menggunakan SQLite, semua data disimpan dalam fail tunggal. Untuk
