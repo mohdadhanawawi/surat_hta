@@ -47,6 +47,8 @@ model Surat {
   fileStoredName String?
   status      StatusTindakan @default(BELUM_MULA)
   catatan     String?
+  ringkasanAI String?
+  ringkasanDijanaPada DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

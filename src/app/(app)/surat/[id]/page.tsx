@@ -5,6 +5,7 @@ import { StatusBadge, Card } from "@/components/ui";
 import { AssignTindakanForm } from "./assign-form";
 import { TindakanItem } from "./tindakan-item";
 import { DeleteSuratButton } from "./delete-button";
+import { RingkasanAI } from "./ringkasan-ai";
 
 export default async function SuratDetailPage({
   params,
@@ -55,7 +56,7 @@ export default async function SuratDetailPage({
       </div>
 
       <Card className="p-6">
-        <dl className="grid grid-cols-2 gap-4 text-sm">
+        <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-slate-500">No. Rujukan</dt>
             <dd className="mt-0.5 text-slate-900">{surat.noRujukan ?? "-"}</dd>
@@ -75,7 +76,7 @@ export default async function SuratDetailPage({
             <dd className="mt-0.5 text-slate-900">{surat.kategori ?? "-"}</dd>
           </div>
           {surat.catatan && (
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <dt className="text-slate-500">Catatan</dt>
               <dd className="mt-0.5 whitespace-pre-wrap text-slate-900">
                 {surat.catatan}
@@ -112,6 +113,13 @@ export default async function SuratDetailPage({
           </div>
         )}
       </Card>
+
+      <RingkasanAI
+        suratId={surat.id}
+        adaFail={Boolean(surat.fileStoredName)}
+        ringkasanAwal={surat.ringkasanAI}
+        dijanaPadaAwal={surat.ringkasanDijanaPada}
+      />
 
       <div>
         <h2 className="mb-3 text-sm font-semibold text-slate-900">

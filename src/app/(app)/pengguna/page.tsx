@@ -25,8 +25,8 @@ export default async function PenggunaPage() {
         Pengurusan Pengguna
       </h1>
 
-      <Card className="overflow-hidden">
-        <table className="w-full text-sm">
+      <Card className="overflow-x-auto">
+        <table className="w-full min-w-[560px] text-sm">
           <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
             <tr>
               <th className="px-4 py-3">Nama</th>

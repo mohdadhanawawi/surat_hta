@@ -2,6 +2,22 @@ import { randomUUID } from "crypto";
 import { mkdir, writeFile, unlink } from "fs/promises";
 import path from "path";
 
+export const MIME_BY_EXT: Record<string, string> = {
+  ".pdf": "application/pdf",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".doc": "application/msword",
+  ".docx":
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+};
+
+export function mimeTypeFromFileName(fileName: string): string {
+  const ext = path.extname(fileName).toLowerCase();
+  return MIME_BY_EXT[ext] ?? "application/octet-stream";
+}
+
 const UPLOAD_DIR = path.resolve(
   /* turbopackIgnore: true */ process.cwd(),
   process.env.UPLOAD_DIR ?? "./data/uploads"

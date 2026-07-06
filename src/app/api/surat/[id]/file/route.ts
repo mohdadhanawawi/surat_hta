@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
-import path from "path";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { resolveUploadPath } from "@/lib/storage";
-
-const MIME_BY_EXT: Record<string, string> = {
-  ".pdf": "application/pdf",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".webp": "image/webp",
-  ".doc": "application/msword",
-  ".docx":
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-};
+import { resolveUploadPath, mimeTypeFromFileName } from "@/lib/storage";
 
 export async function GET(
   _request: NextRequest,
@@ -31,8 +19,7 @@ export async function GET(
   try {
     const filePath = resolveUploadPath(surat.fileStoredName);
     const buffer = await readFile(filePath);
-    const ext = path.extname(surat.fileStoredName).toLowerCase();
-    const mime = MIME_BY_EXT[ext] ?? "application/octet-stream";
+    const mime = mimeTypeFromFileName(surat.fileStoredName);
 
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {

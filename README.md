@@ -14,8 +14,10 @@ tugaskan tindakan kepada staf.
 - Status surat dikemaskini secara automatik berdasarkan status tindakan
 - Halaman "Tugasan Saya" untuk staf lihat semua tindakan yang ditugaskan
 - Admin urus akaun pengguna (cipta, nyahaktifkan, tetapkan semula kata laluan)
+- Setiap pengguna boleh tukar kata laluan sendiri
 - Fail surat disimpan di luar folder awam dan hanya boleh diakses oleh
   pengguna yang log masuk
+- Ringkasan surat automatik guna Gemini API (pilihan, perlukan API key)
 
 ## Teknologi
 
@@ -73,6 +75,8 @@ keperluan pangkalan data berasingan kerana menggunakan SQLite).
    - `SESSION_SECRET` - rentetan rawak sekurang-kurangnya 32 aksara
    - `UPLOAD_DIR` - lokasi simpanan fail surat (contoh `./data/uploads`)
    - `NODE_ENV=production`
+   - `GEMINI_API_KEY` - (pilihan) untuk fungsi Ringkasan AI, dapatkan
+     percuma di https://aistudio.google.com/apikey
 
 2. Build aplikasi:
 
@@ -116,6 +120,8 @@ Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
    - `UPLOAD_DIR` = `/data/uploads`
    - `SESSION_SECRET` = rentetan rawak 32+ aksara (jana dengan arahan di atas)
    - `NODE_ENV` = `production`
+   - `GEMINI_API_KEY` = (pilihan) API key percuma dari
+     https://aistudio.google.com/apikey, untuk fungsi Ringkasan AI
 
    Path mesti berada di dalam `/data` (mount path Volume) supaya kekal
    selepas redeploy — bahagian lain sistem fail Railway bersifat sementara.

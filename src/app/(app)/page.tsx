@@ -53,18 +53,18 @@ export default async function DashboardPage({
         )}
       </div>
 
-      <form className="mb-4 flex flex-wrap gap-3">
+      <form className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <input
           type="text"
           name="q"
           placeholder="Cari tajuk, no. rujukan, sumber..."
           defaultValue={params.q}
-          className="w-64 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:w-64"
         />
         <select
           name="status"
           defaultValue={params.status ?? ""}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:w-auto"
         >
           <option value="">Semua Status</option>
           <option value="BELUM_MULA">Belum Mula</option>
@@ -74,7 +74,7 @@ export default async function DashboardPage({
         <select
           name="kategori"
           defaultValue={params.kategori ?? ""}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:w-auto"
         >
           <option value="">Semua Kategori</option>
           {KATEGORI_SURAT.map((k) => (
@@ -85,13 +85,63 @@ export default async function DashboardPage({
         </select>
         <button
           type="submit"
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 sm:w-auto"
         >
           Tapis
         </button>
       </form>
 
-      <Card className="overflow-hidden">
+      {/* Senarai kad untuk skrin mobile */}
+      <div className="space-y-3 md:hidden">
+        {surat.map((s) => (
+          <Card key={s.id} className="p-4">
+            <Link
+              href={`/surat/${s.id}`}
+              className="font-medium text-teal-700 hover:underline"
+            >
+              {s.tajuk}
+            </Link>
+            {s.noRujukan && (
+              <div className="text-xs text-slate-500">{s.noRujukan}</div>
+            )}
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-600">
+              <div>
+                <dt className="text-slate-400">Sumber</dt>
+                <dd>{s.sumber ?? "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">Kategori</dt>
+                <dd>{s.kategori ?? "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">Tarikh Surat</dt>
+                <dd>{new Intl.DateTimeFormat("ms-MY").format(s.tarikhSurat)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">Ditugaskan Kepada</dt>
+                <dd>
+                  {s.tindakan.length > 0
+                    ? [...new Set(s.tindakan.map((t) => t.assignedTo.name))].join(
+                        ", "
+                      )
+                    : "-"}
+                </dd>
+              </div>
+            </dl>
+            <div className="mt-2">
+              <StatusBadge status={s.status} />
+            </div>
+          </Card>
+        ))}
+        {surat.length === 0 && (
+          <p className="py-8 text-center text-sm text-slate-400">
+            Tiada surat dijumpai.
+          </p>
+        )}
+      </div>
+
+      {/* Jadual untuk skrin desktop */}
+      <Card className="hidden overflow-x-auto md:block">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
             <tr>
