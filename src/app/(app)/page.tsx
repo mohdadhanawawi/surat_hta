@@ -2,20 +2,31 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge, Card } from "@/components/ui";
-import { KATEGORI_SURAT } from "@/lib/labels";
+import { FilterForm } from "./filter-form";
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; kategori?: string; q?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    kategori?: string;
+    q?: string;
+    tarikhDari?: string;
+    tarikhHingga?: string;
+  }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
+
+  const tarikhSurat: { gte?: Date; lte?: Date } = {};
+  if (params.tarikhDari) tarikhSurat.gte = new Date(`${params.tarikhDari}T00:00:00`);
+  if (params.tarikhHingga) tarikhSurat.lte = new Date(`${params.tarikhHingga}T23:59:59.999`);
 
   const surat = await prisma.surat.findMany({
     where: {
       ...(params.status ? { status: params.status as never } : {}),
       ...(params.kategori ? { kategori: params.kategori } : {}),
+      ...(Object.keys(tarikhSurat).length > 0 ? { tarikhSurat } : {}),
       ...(params.q
         ? {
             OR: [
@@ -53,43 +64,13 @@ export default async function DashboardPage({
         )}
       </div>
 
-      <form className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <input
-          type="text"
-          name="q"
-          placeholder="Cari tajuk, no. rujukan, sumber..."
-          defaultValue={params.q}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:w-64"
-        />
-        <select
-          name="status"
-          defaultValue={params.status ?? ""}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:w-auto"
-        >
-          <option value="">Semua Status</option>
-          <option value="BELUM_MULA">Belum Mula</option>
-          <option value="DALAM_TINDAKAN">Dalam Tindakan</option>
-          <option value="SELESAI">Selesai</option>
-        </select>
-        <select
-          name="kategori"
-          defaultValue={params.kategori ?? ""}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:w-auto"
-        >
-          <option value="">Semua Kategori</option>
-          {KATEGORI_SURAT.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 sm:w-auto"
-        >
-          Tapis
-        </button>
-      </form>
+      <FilterForm
+        q={params.q}
+        status={params.status}
+        kategori={params.kategori}
+        tarikhDari={params.tarikhDari}
+        tarikhHingga={params.tarikhHingga}
+      />
 
       {/* Senarai kad untuk skrin mobile */}
       <div className="space-y-3 md:hidden">
