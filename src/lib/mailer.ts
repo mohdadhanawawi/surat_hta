@@ -1,29 +1,19 @@
-import nodemailer from "nodemailer";
-
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter(): nodemailer.Transporter | null {
-  if (transporter) return transporter;
-
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASSWORD;
-
-  if (!host || !port || !user || !pass) return null;
-
-  transporter = nodemailer.createTransport({
-    host,
-    port: Number(port),
-    secure: Number(port) === 465,
-    auth: { user, pass },
-  });
-
-  return transporter;
-}
+import { Resend } from "resend";
 
 function getAppUrl(): string {
   return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("Emel mengambil masa terlalu lama.")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timer!);
+  }
 }
 
 export async function hantarEmelTindakan({
@@ -43,12 +33,12 @@ export async function hantarEmelTindakan({
   arahan: string;
   tarikhAkhir: Date | null;
 }): Promise<{ sent: boolean; error?: string }> {
-  const transport = getTransporter();
-  if (!transport) {
-    return { sent: false, error: "SMTP belum dikonfigurasi." };
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return { sent: false, error: "RESEND_API_KEY belum dikonfigurasi." };
   }
 
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   const suratUrl = `${getAppUrl()}/surat/${suratId}`;
 
   const tarikhAkhirText = tarikhAkhir
@@ -56,15 +46,6 @@ export async function hantarEmelTindakan({
         tarikhAkhir
       )
     : "Tiada tarikh akhir ditetapkan";
-
-  const text =
-    `Salam ${namaStaf},\n\n` +
-    `Anda telah ditugaskan satu tindakan oleh ${namaPemberi} berkaitan surat berikut:\n\n` +
-    `Surat: ${suratTajuk}\n` +
-    `Arahan: ${arahan}\n` +
-    `Tarikh Akhir: ${tarikhAkhirText}\n\n` +
-    `Sila log masuk untuk butiran penuh dan kemaskini status tindakan:\n${suratUrl}\n\n` +
-    `Sistem Pengurusan Surat Unit Fisioterapi HTA`;
 
   const html = `
     <p>Salam ${escapeHtml(namaStaf)},</p>
@@ -79,13 +60,20 @@ export async function hantarEmelTindakan({
   `;
 
   try {
-    await transport.sendMail({
-      from,
-      to,
-      subject: `Tindakan Baru Ditugaskan: ${suratTajuk}`,
-      text,
-      html,
-    });
+    const resend = new Resend(apiKey);
+    const { error } = await withTimeout(
+      resend.emails.send({
+        from: `Surat Fisioterapi HTA <${from}>`,
+        to,
+        subject: `Tindakan Baru Ditugaskan: ${suratTajuk}`,
+        html,
+      }),
+      8000
+    );
+
+    if (error) {
+      return { sent: false, error: error.message };
+    }
     return { sent: true };
   } catch (err) {
     return {

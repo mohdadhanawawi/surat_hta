@@ -19,7 +19,7 @@ tugaskan tindakan kepada staf.
   pengguna yang log masuk
 - Ringkasan surat automatik guna Gemini API (pilihan, perlukan API key)
 - Notifikasi emel automatik kepada staf bila ditugaskan tindakan baru
-  (pilihan, perlukan konfigurasi SMTP)
+  (pilihan, guna Resend API — percuma)
 
 ## Teknologi
 
@@ -81,10 +81,11 @@ keperluan pangkalan data berasingan kerana menggunakan SQLite).
      percuma di https://aistudio.google.com/apikey
    - `APP_URL` - URL awam aplikasi (contoh `https://surat.hospital.gov.my`),
      digunakan untuk pautan dalam emel notifikasi
-   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` -
-     (pilihan) untuk notifikasi emel bila tindakan di-assign — dapatkan
-     daripada penyedia emel rasmi (contoh IT KKM/hospital) atau perkhidmatan
-     SMTP lain
+   - `RESEND_API_KEY`, `EMAIL_FROM` - (pilihan) untuk notifikasi emel bila
+     tindakan di-assign, dapatkan API key percuma di
+     https://resend.com/api-keys. **Nota:** kebanyakan platform hosting
+     (termasuk Railway pelan percuma) menyekat sambungan SMTP keluar, jadi
+     sistem ini guna Resend (HTTPS API) dan bukan SMTP tradisional
 
 2. Build aplikasi:
 
@@ -131,8 +132,9 @@ Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
    - `GEMINI_API_KEY` = (pilihan) API key percuma dari
      https://aistudio.google.com/apikey, untuk fungsi Ringkasan AI
    - `APP_URL` = URL awam Railway anda (contoh `https://surathta-fisio.up.railway.app`)
-   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` =
-     (pilihan) untuk notifikasi emel bila tindakan di-assign
+   - `RESEND_API_KEY`, `EMAIL_FROM` = (pilihan) untuk notifikasi emel bila
+     tindakan di-assign — **jangan guna SMTP di Railway**, port SMTP
+     disekat pada pelan percuma/Hobby
 
    Path mesti berada di dalam `/data` (mount path Volume) supaya kekal
    selepas redeploy — bahagian lain sistem fail Railway bersifat sementara.
@@ -145,28 +147,34 @@ Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
 8. Log masuk dengan `admin` / `admin123` dan **tukar kata laluan** segera
    melalui halaman Pengurusan Pengguna.
 
-### Konfigurasi Notifikasi Emel (SMTP)
+### Konfigurasi Notifikasi Emel (Resend)
 
 Bila admin tugaskan tindakan kepada staf yang mempunyai emel direkodkan
 (diset di halaman Pengurusan Pengguna), sistem akan cuba menghantar emel
-notifikasi secara automatik. Jika SMTP tidak dikonfigurasi, tindakan tetap
-berjaya ditugaskan seperti biasa — emel hanya dilangkau secara senyap.
+notifikasi secara automatik. Jika `RESEND_API_KEY` tidak dikonfigurasi,
+tindakan tetap berjaya ditugaskan seperti biasa — emel hanya dilangkau
+secara senyap.
 
-Nilai `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD` bergantung kepada
-penyedia emel rasmi yang digunakan. Contoh tetapan biasa:
+Sistem ini sengaja **tidak** guna SMTP tradisional kerana kebanyakan
+platform hosting percuma (termasuk Railway pelan Free/Hobby/Trial)
+menyekat sambungan SMTP keluar (port 25/465/587) untuk mengelakkan
+penyalahgunaan. Resend pula menghantar emel melalui HTTPS API biasa,
+jadi ia berfungsi di mana-mana platform hosting.
 
-| Penyedia | SMTP_HOST | SMTP_PORT |
-|---|---|---|
-| Microsoft 365 / Outlook | `smtp.office365.com` | `587` |
-| Google Workspace / Gmail | `smtp.gmail.com` | `587` |
-| Domain/hosting sendiri | Dapatkan daripada pentadbir IT/hosting emel | biasanya `587` atau `465` |
+1. Daftar di [resend.com](https://resend.com) (percuma, tiada kad kredit
+   diperlukan)
+2. **API Keys** → **Create API Key** → copy key tersebut
+3. Tetapkan `RESEND_API_KEY` = key tersebut
+4. Tetapkan `EMAIL_FROM` = `onboarding@resend.dev` (alamat ujian rasmi
+   Resend — boleh terus digunakan tanpa verify domain)
 
-Untuk Gmail/Google Workspace, `SMTP_PASSWORD` mesti guna
-[App Password](https://myaccount.google.com/apppasswords), bukan kata
-laluan akaun biasa (perlu 2-Step Verification diaktifkan dahulu).
+Had percuma: 3,000 emel/bulan, 100 emel/hari — mencukupi untuk unit kecil.
 
-`SMTP_FROM` ialah alamat emel yang akan dipaparkan sebagai pengirim
-(biasanya sama dengan `SMTP_USER`).
+**Pilihan lanjutan (untuk kelihatan lebih profesional):** verify domain
+rasmi hospital anda sendiri di Resend (**Domains** → **Add Domain**,
+ikut arahan tambah rekod DNS), kemudian tukar `EMAIL_FROM` kepada alamat
+domain tersebut (contoh `notifikasi@hospital.gov.my`). Ini memerlukan
+akses konfigurasi DNS domain tersebut.
 
 ### Sandaran Data (Backup)
 
