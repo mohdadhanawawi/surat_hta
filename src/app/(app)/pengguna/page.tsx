@@ -12,6 +12,7 @@ export default async function PenggunaPage() {
       id: true,
       name: true,
       username: true,
+      email: true,
       role: true,
       isActive: true,
       createdAt: true,
@@ -26,11 +27,12 @@ export default async function PenggunaPage() {
       </h1>
 
       <Card className="overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
+        <table className="w-full min-w-[680px] text-sm">
           <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
             <tr>
               <th className="px-4 py-3">Nama</th>
               <th className="px-4 py-3">Username</th>
+              <th className="px-4 py-3">Emel</th>
               <th className="px-4 py-3">Peranan</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3"></th>

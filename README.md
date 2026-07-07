@@ -18,6 +18,8 @@ tugaskan tindakan kepada staf.
 - Fail surat disimpan di luar folder awam dan hanya boleh diakses oleh
   pengguna yang log masuk
 - Ringkasan surat automatik guna Gemini API (pilihan, perlukan API key)
+- Notifikasi emel automatik kepada staf bila ditugaskan tindakan baru
+  (pilihan, perlukan konfigurasi SMTP)
 
 ## Teknologi
 
@@ -77,6 +79,12 @@ keperluan pangkalan data berasingan kerana menggunakan SQLite).
    - `NODE_ENV=production`
    - `GEMINI_API_KEY` - (pilihan) untuk fungsi Ringkasan AI, dapatkan
      percuma di https://aistudio.google.com/apikey
+   - `APP_URL` - URL awam aplikasi (contoh `https://surat.hospital.gov.my`),
+     digunakan untuk pautan dalam emel notifikasi
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` -
+     (pilihan) untuk notifikasi emel bila tindakan di-assign — dapatkan
+     daripada penyedia emel rasmi (contoh IT KKM/hospital) atau perkhidmatan
+     SMTP lain
 
 2. Build aplikasi:
 
@@ -122,6 +130,9 @@ Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
    - `NODE_ENV` = `production`
    - `GEMINI_API_KEY` = (pilihan) API key percuma dari
      https://aistudio.google.com/apikey, untuk fungsi Ringkasan AI
+   - `APP_URL` = URL awam Railway anda (contoh `https://surathta-fisio.up.railway.app`)
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` =
+     (pilihan) untuk notifikasi emel bila tindakan di-assign
 
    Path mesti berada di dalam `/data` (mount path Volume) supaya kekal
    selepas redeploy — bahagian lain sistem fail Railway bersifat sementara.
@@ -133,6 +144,29 @@ Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
    (atau tambah domain sendiri jika ada).
 8. Log masuk dengan `admin` / `admin123` dan **tukar kata laluan** segera
    melalui halaman Pengurusan Pengguna.
+
+### Konfigurasi Notifikasi Emel (SMTP)
+
+Bila admin tugaskan tindakan kepada staf yang mempunyai emel direkodkan
+(diset di halaman Pengurusan Pengguna), sistem akan cuba menghantar emel
+notifikasi secara automatik. Jika SMTP tidak dikonfigurasi, tindakan tetap
+berjaya ditugaskan seperti biasa — emel hanya dilangkau secara senyap.
+
+Nilai `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD` bergantung kepada
+penyedia emel rasmi yang digunakan. Contoh tetapan biasa:
+
+| Penyedia | SMTP_HOST | SMTP_PORT |
+|---|---|---|
+| Microsoft 365 / Outlook | `smtp.office365.com` | `587` |
+| Google Workspace / Gmail | `smtp.gmail.com` | `587` |
+| Domain/hosting sendiri | Dapatkan daripada pentadbir IT/hosting emel | biasanya `587` atau `465` |
+
+Untuk Gmail/Google Workspace, `SMTP_PASSWORD` mesti guna
+[App Password](https://myaccount.google.com/apppasswords), bukan kata
+laluan akaun biasa (perlu 2-Step Verification diaktifkan dahulu).
+
+`SMTP_FROM` ialah alamat emel yang akan dipaparkan sebagai pengirim
+(biasanya sama dengan `SMTP_USER`).
 
 ### Sandaran Data (Backup)
 

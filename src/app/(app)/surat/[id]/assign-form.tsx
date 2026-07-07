@@ -12,12 +12,14 @@ export function AssignTindakanForm({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -39,8 +41,19 @@ export function AssignTindakanForm({
         setError(data.error ?? "Gagal menugaskan tindakan.");
         return;
       }
-      setOpen(false);
       router.refresh();
+
+      let mesej = "Tindakan berjaya ditugaskan.";
+      if (data.emel?.sent) {
+        mesej += " Emel notifikasi telah dihantar.";
+      } else if (data.emel?.error) {
+        mesej += ` Emel notifikasi gagal dihantar (${data.emel.error}).`;
+      }
+      setSuccess(mesej);
+      setTimeout(() => {
+        setOpen(false);
+        setSuccess(null);
+      }, 2500);
     } catch {
       setError("Ralat rangkaian. Sila cuba lagi.");
     } finally {
@@ -108,6 +121,11 @@ export function AssignTindakanForm({
       {error && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
+        </p>
+      )}
+      {success && (
+        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {success}
         </p>
       )}
 

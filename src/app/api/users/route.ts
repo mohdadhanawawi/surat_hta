@@ -10,6 +10,7 @@ const createUserSchema = z.object({
     .string()
     .min(3, "Username sekurang-kurangnya 3 aksara.")
     .regex(/^[a-z0-9_.]+$/i, "Username hanya boleh huruf, nombor, titik, garis bawah."),
+  email: z.string().email("Format emel tidak sah.").optional().or(z.literal("")),
   password: z.string().min(6, "Kata laluan sekurang-kurangnya 6 aksara."),
   role: z.enum(["ADMIN", "STAFF"]),
 });
@@ -22,6 +23,7 @@ export async function GET() {
       id: true,
       name: true,
       username: true,
+      email: true,
       role: true,
       isActive: true,
       createdAt: true,
@@ -60,6 +62,7 @@ export async function POST(request: NextRequest) {
     data: {
       name: parsed.data.name,
       username: parsed.data.username,
+      email: parsed.data.email || undefined,
       passwordHash,
       role: parsed.data.role,
     },
@@ -67,6 +70,7 @@ export async function POST(request: NextRequest) {
       id: true,
       name: true,
       username: true,
+      email: true,
       role: true,
       isActive: true,
       createdAt: true,

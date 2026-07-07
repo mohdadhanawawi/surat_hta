@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { hantarEmelTindakan } from "@/lib/mailer";
 
 const createTindakanSchema = z.object({
   suratId: z.string().min(1),
@@ -54,5 +55,18 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ tindakan }, { status: 201 });
+  let emel: { sent: boolean; error?: string } | null = null;
+  if (assignee.email) {
+    emel = await hantarEmelTindakan({
+      to: assignee.email,
+      namaStaf: assignee.name,
+      namaPemberi: user.name,
+      suratTajuk: surat.tajuk,
+      suratId: surat.id,
+      arahan,
+      tarikhAkhir: tindakan.tarikhAkhir,
+    });
+  }
+
+  return NextResponse.json({ tindakan, emel }, { status: 201 });
 }

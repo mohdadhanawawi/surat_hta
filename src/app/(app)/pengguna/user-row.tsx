@@ -8,6 +8,7 @@ interface UserData {
   id: string;
   name: string;
   username: string;
+  email: string | null;
   role: string;
   isActive: boolean;
 }
@@ -59,10 +60,37 @@ export function UserRow({
     }
   }
 
+  async function editEmail() {
+    const email = prompt(
+      `Masukkan emel untuk ${user.name} (kosongkan untuk buang emel):`,
+      user.email ?? ""
+    );
+    if (email === null) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error ?? "Gagal mengemaskini emel.");
+      } else {
+        router.refresh();
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <tr className="hover:bg-slate-50">
       <td className="px-4 py-3 font-medium text-slate-900">{user.name}</td>
       <td className="px-4 py-3 text-slate-600">{user.username}</td>
+      <td className="px-4 py-3 text-slate-600">
+        {user.email ?? <span className="text-slate-300">-</span>}
+      </td>
       <td className="px-4 py-3 text-slate-600">{ROLE_LABEL[user.role]}</td>
       <td className="px-4 py-3">
         <span
@@ -76,24 +104,33 @@ export function UserRow({
         </span>
       </td>
       <td className="px-4 py-3 text-right">
-        {!isSelf && (
-          <div className="flex justify-end gap-3 text-xs">
-            <button
-              onClick={resetPassword}
-              disabled={loading}
-              className="text-slate-600 hover:underline"
-            >
-              Tetapkan Kata Laluan
-            </button>
-            <button
-              onClick={toggleActive}
-              disabled={loading}
-              className={user.isActive ? "text-red-600" : "text-teal-600"}
-            >
-              {user.isActive ? "Nyahaktifkan" : "Aktifkan"}
-            </button>
-          </div>
-        )}
+        <div className="flex justify-end gap-3 text-xs">
+          <button
+            onClick={editEmail}
+            disabled={loading}
+            className="text-slate-600 hover:underline"
+          >
+            Edit Emel
+          </button>
+          {!isSelf && (
+            <>
+              <button
+                onClick={resetPassword}
+                disabled={loading}
+                className="text-slate-600 hover:underline"
+              >
+                Tetapkan Kata Laluan
+              </button>
+              <button
+                onClick={toggleActive}
+                disabled={loading}
+                className={user.isActive ? "text-red-600" : "text-teal-600"}
+              >
+                {user.isActive ? "Nyahaktifkan" : "Aktifkan"}
+              </button>
+            </>
+          )}
+        </div>
       </td>
     </tr>
   );

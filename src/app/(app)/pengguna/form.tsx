@@ -64,6 +64,21 @@ export function NewUserForm() {
         </div>
       </div>
 
+      <div>
+        <label className="mb-1 block text-sm font-medium text-slate-700">
+          Emel
+        </label>
+        <input
+          name="email"
+          type="email"
+          placeholder="nama@hospital.gov.my"
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+        />
+        <p className="mt-1 text-xs text-slate-400">
+          Untuk terima notifikasi emel bila ditugaskan tindakan (pilihan)
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
