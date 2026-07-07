@@ -66,6 +66,14 @@ export async function POST(request: NextRequest) {
       arahan,
       tarikhAkhir: tindakan.tarikhAkhir,
     });
+    console.log(
+      `[emel-tindakan] tindakan=${tindakan.id} to=${assignee.email} sent=${emel.sent}` +
+        (emel.error ? ` error=${emel.error}` : "")
+    );
+  } else {
+    console.log(
+      `[emel-tindakan] tindakan=${tindakan.id} dilangkau: staf ${assignee.name} tiada emel`
+    );
   }
 
   return NextResponse.json({ tindakan, emel }, { status: 201 });

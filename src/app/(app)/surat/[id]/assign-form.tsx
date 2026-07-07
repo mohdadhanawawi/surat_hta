@@ -50,10 +50,6 @@ export function AssignTindakanForm({
         mesej += ` Emel notifikasi gagal dihantar (${data.emel.error}).`;
       }
       setSuccess(mesej);
-      setTimeout(() => {
-        setOpen(false);
-        setSuccess(null);
-      }, 2500);
     } catch {
       setError("Ralat rangkaian. Sila cuba lagi.");
     } finally {
@@ -69,6 +65,26 @@ export function AssignTindakanForm({
       >
         + Tugaskan Tindakan
       </button>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {success}
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setSuccess(null);
+          }}
+          className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+        >
+          Tutup
+        </button>
+      </div>
     );
   }
 
@@ -121,11 +137,6 @@ export function AssignTindakanForm({
       {error && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
-        </p>
-      )}
-      {success && (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {success}
         </p>
       )}
 
