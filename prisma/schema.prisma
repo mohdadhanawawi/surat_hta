@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum StatusTindakan {
+  BELUM_MULA
+  DALAM_TINDAKAN
+  SELESAI
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique
+  email        String?
+  passwordHash String
+  role         Role     @default(STAFF)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  suratDicipta Surat[]     @relation("SuratDiciptaOleh")
+  tindakanDiberi Tindakan[] @relation("TindakanDiberikanOleh")
+  tindakanDitugaskan Tindakan[] @relation("TindakanDitugaskanKepada")
+}
+
+model Surat {
+  id          String   @id @default(cuid())
+  tajuk       String
+  noRujukan   String?
+  tarikhSurat DateTime
+  sumber      String?
+  kategori    String?
+  link        String?
+  fileName    String?
+  fileStoredName String?
+  status      StatusTindakan @default(BELUM_MULA)
+  catatan     String?
+  ringkasanAI String?
+  ringkasanDijanaPada DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String
+  createdBy   User   @relation("SuratDiciptaOleh", fields: [createdById], references: [id])
+
+  tindakan    Tindakan[]
+}
+
+model Tindakan {
+  id            String   @id @default(cuid())
+  suratId       String
+  surat         Surat    @relation(fields: [suratId], references: [id], onDelete: Cascade)
+
+  assignedToId  String
+  assignedTo    User     @relation("TindakanDitugaskanKepada", fields: [assignedToId], references: [id])
+
+  assignedById  String
+  assignedBy    User     @relation("TindakanDiberikanOleh", fields: [assignedById], references: [id])
+
+  arahan        String
+  tarikhAkhir   DateTime?
+  status        StatusTindakan @default(BELUM_MULA)
+  catatanStaff  String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  completedAt   DateTime?
+}
