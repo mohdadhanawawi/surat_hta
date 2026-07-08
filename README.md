@@ -19,7 +19,7 @@ tugaskan tindakan kepada staf.
   pengguna yang log masuk
 - Ringkasan surat automatik guna Gemini API (pilihan, perlukan API key)
 - Notifikasi emel automatik kepada staf bila ditugaskan tindakan baru
-  (pilihan, guna Resend API — percuma)
+  (pilihan, guna EmailJS — percuma, hantar melalui Gmail sendiri)
 
 ## Teknologi
 
@@ -81,11 +81,11 @@ keperluan pangkalan data berasingan kerana menggunakan SQLite).
      percuma di https://aistudio.google.com/apikey
    - `APP_URL` - URL awam aplikasi (contoh `https://surat.hospital.gov.my`),
      digunakan untuk pautan dalam emel notifikasi
-   - `RESEND_API_KEY`, `EMAIL_FROM` - (pilihan) untuk notifikasi emel bila
-     tindakan di-assign, dapatkan API key percuma di
-     https://resend.com/api-keys. **Nota:** kebanyakan platform hosting
-     (termasuk Railway pelan percuma) menyekat sambungan SMTP keluar, jadi
-     sistem ini guna Resend (HTTPS API) dan bukan SMTP tradisional
+   - `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY`,
+     `EMAILJS_PRIVATE_KEY` - (pilihan) untuk notifikasi emel bila tindakan
+     di-assign, guna [EmailJS](https://www.emailjs.com) (percuma, hantar
+     melalui akaun Gmail sendiri, tiada domain diperlukan) - lihat panduan
+     penuh di bawah
 
 2. Build aplikasi:
 
@@ -132,9 +132,10 @@ Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
    - `GEMINI_API_KEY` = (pilihan) API key percuma dari
      https://aistudio.google.com/apikey, untuk fungsi Ringkasan AI
    - `APP_URL` = URL awam Railway anda (contoh `https://surathta-fisio.up.railway.app`)
-   - `RESEND_API_KEY`, `EMAIL_FROM` = (pilihan) untuk notifikasi emel bila
-     tindakan di-assign — **jangan guna SMTP di Railway**, port SMTP
-     disekat pada pelan percuma/Hobby
+   - `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY`,
+     `EMAILJS_PRIVATE_KEY` = (pilihan) untuk notifikasi emel bila tindakan
+     di-assign — **jangan guna SMTP di Railway**, port SMTP disekat pada
+     pelan percuma/Hobby
 
    Path mesti berada di dalam `/data` (mount path Volume) supaya kekal
    selepas redeploy — bahagian lain sistem fail Railway bersifat sementara.
@@ -147,34 +148,61 @@ Tanpa Volume, data akan hilang setiap kali aplikasi di-redeploy.
 8. Log masuk dengan `admin` / `admin123` dan **tukar kata laluan** segera
    melalui halaman Pengurusan Pengguna.
 
-### Konfigurasi Notifikasi Emel (Resend)
+### Konfigurasi Notifikasi Emel (EmailJS)
 
 Bila admin tugaskan tindakan kepada staf yang mempunyai emel direkodkan
 (diset di halaman Pengurusan Pengguna), sistem akan cuba menghantar emel
-notifikasi secara automatik. Jika `RESEND_API_KEY` tidak dikonfigurasi,
-tindakan tetap berjaya ditugaskan seperti biasa — emel hanya dilangkau
-secara senyap.
+notifikasi secara automatik. Jika EmailJS tidak dikonfigurasi, tindakan
+tetap berjaya ditugaskan seperti biasa — emel hanya dilangkau secara
+senyap.
 
-Sistem ini sengaja **tidak** guna SMTP tradisional kerana kebanyakan
-platform hosting percuma (termasuk Railway pelan Free/Hobby/Trial)
-menyekat sambungan SMTP keluar (port 25/465/587) untuk mengelakkan
-penyalahgunaan. Resend pula menghantar emel melalui HTTPS API biasa,
-jadi ia berfungsi di mana-mana platform hosting.
+Sistem ini guna [EmailJS](https://www.emailjs.com) kerana ia menghantar
+emel melalui akaun Gmail (atau Outlook dll) peribadi anda sendiri melalui
+HTTPS API — **tiada keperluan verify domain**, dan boleh hantar terus ke
+sebarang alamat emel penerima (`@moh.gov.my`, `@gmail.com`, dll). Sesuai
+untuk unit kecil tanpa domain sendiri.
 
-1. Daftar di [resend.com](https://resend.com) (percuma, tiada kad kredit
-   diperlukan)
-2. **API Keys** → **Create API Key** → copy key tersebut
-3. Tetapkan `RESEND_API_KEY` = key tersebut
-4. Tetapkan `EMAIL_FROM` = `onboarding@resend.dev` (alamat ujian rasmi
-   Resend — boleh terus digunakan tanpa verify domain)
+1. Daftar percuma di [emailjs.com](https://www.emailjs.com)
+2. **Email Services** → **Add New Email Service** → pilih **Gmail** →
+   **Connect Account** → log masuk & benarkan akses ke akaun Gmail yang
+   akan menghantar notifikasi (contoh akaun Gmail unit/peribadi admin)
+3. Catat **Service ID** yang dipaparkan
+4. **Email Templates** → **Create New Template**. Dalam tab **Settings**
+   template, tetapkan medan **To Email** kepada `{{to_email}}`. Dalam
+   kandungan template (Subject & Content), guna pemboleh ubah berikut:
 
-Had percuma: 3,000 emel/bulan, 100 emel/hari — mencukupi untuk unit kecil.
+   ```
+   Subject: Tindakan Baru Ditugaskan: {{surat_title}}
 
-**Pilihan lanjutan (untuk kelihatan lebih profesional):** verify domain
-rasmi hospital anda sendiri di Resend (**Domains** → **Add Domain**,
-ikut arahan tambah rekod DNS), kemudian tukar `EMAIL_FROM` kepada alamat
-domain tersebut (contoh `notifikasi@hospital.gov.my`). Ini memerlukan
-akses konfigurasi DNS domain tersebut.
+   Salam {{staff_name}},
+
+   Anda telah ditugaskan satu tindakan oleh {{admin_name}} berkaitan
+   surat berikut:
+
+   Surat: {{surat_title}}
+   Arahan: {{arahan}}
+   Tarikh Akhir: {{deadline}}
+
+   Sila log masuk untuk butiran penuh dan kemaskini status tindakan:
+   {{surat_url}}
+   ```
+
+   Simpan template dan catat **Template ID**.
+5. Pergi **Account** (ikon profil) → cari bahagian **API Keys** — catat
+   **Public Key** dan **Private Key**
+6. Tetapkan semua 4 nilai di Railway/`.env`:
+   - `EMAILJS_SERVICE_ID`
+   - `EMAILJS_TEMPLATE_ID`
+   - `EMAILJS_PUBLIC_KEY`
+   - `EMAILJS_PRIVATE_KEY`
+
+Had percuma: 200 emel/bulan — mencukupi untuk unit kecil. Emel akan
+kelihatan dihantar daripada akaun Gmail yang disambungkan pada langkah 2.
+
+**Nota keselamatan:** akaun Gmail yang disambungkan boleh disekat oleh
+Google jika melebihi had penghantaran hariannya atau ditanda sebagai
+spam — guna untuk penghantaran jumlah rendah sahaja (sesuai untuk kes
+penggunaan unit kecil ini).
 
 ### Sandaran Data (Backup)
 

@@ -1,5 +1,3 @@
-import { Resend } from "resend";
-
 function getAppUrl(): string {
   return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 }
@@ -33,46 +31,49 @@ export async function hantarEmelTindakan({
   arahan: string;
   tarikhAkhir: Date | null;
 }): Promise<{ sent: boolean; error?: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return { sent: false, error: "RESEND_API_KEY belum dikonfigurasi." };
+  const serviceId = process.env.EMAILJS_SERVICE_ID;
+  const templateId = process.env.EMAILJS_TEMPLATE_ID;
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+
+  if (!serviceId || !templateId || !publicKey || !privateKey) {
+    return { sent: false, error: "EmailJS belum dikonfigurasi." };
   }
 
-  const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   const suratUrl = `${getAppUrl()}/surat/${suratId}`;
-
   const tarikhAkhirText = tarikhAkhir
     ? new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium" }).format(
         tarikhAkhir
       )
     : "Tiada tarikh akhir ditetapkan";
 
-  const html = `
-    <p>Salam ${escapeHtml(namaStaf)},</p>
-    <p>Anda telah ditugaskan satu tindakan oleh <strong>${escapeHtml(namaPemberi)}</strong> berkaitan surat berikut:</p>
-    <table cellpadding="4" cellspacing="0">
-      <tr><td><strong>Surat</strong></td><td>${escapeHtml(suratTajuk)}</td></tr>
-      <tr><td><strong>Arahan</strong></td><td>${escapeHtml(arahan)}</td></tr>
-      <tr><td><strong>Tarikh Akhir</strong></td><td>${escapeHtml(tarikhAkhirText)}</td></tr>
-    </table>
-    <p><a href="${suratUrl}">Klik di sini untuk lihat butiran penuh dan kemaskini status tindakan</a></p>
-    <p style="color:#64748b;font-size:12px;">Sistem Pengurusan Surat Unit Fisioterapi HTA</p>
-  `;
-
   try {
-    const resend = new Resend(apiKey);
-    const { error } = await withTimeout(
-      resend.emails.send({
-        from: `Surat Fisioterapi HTA <${from}>`,
-        to,
-        subject: `Tindakan Baru Ditugaskan: ${suratTajuk}`,
-        html,
+    const res = await withTimeout(
+      fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service_id: serviceId,
+          template_id: templateId,
+          user_id: publicKey,
+          accessToken: privateKey,
+          template_params: {
+            to_email: to,
+            staff_name: namaStaf,
+            admin_name: namaPemberi,
+            surat_title: suratTajuk,
+            arahan,
+            deadline: tarikhAkhirText,
+            surat_url: suratUrl,
+          },
+        }),
       }),
       8000
     );
 
-    if (error) {
-      return { sent: false, error: error.message };
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      return { sent: false, error: `EmailJS (${res.status}): ${body.slice(0, 200)}` };
     }
     return { sent: true };
   } catch (err) {
@@ -81,12 +82,4 @@ export async function hantarEmelTindakan({
       error: err instanceof Error ? err.message : "Gagal menghantar emel.",
     };
   }
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
