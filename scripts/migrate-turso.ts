@@ -23,6 +23,19 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
 async function main() {
   const url = process.env.TURSO_DATABASE_URL;
   if (!url) {
+    if (process.env.VERCEL) {
+      throw new Error(
+        "TURSO_DATABASE_URL tidak ditetapkan semasa build di Vercel! " +
+          "Ini akan menyebabkan aplikasi cuba guna fail SQLite tempatan yang " +
+          "tidak wujud, dan langkah seed akan gagal dengan ralat 'table does " +
+          "not exist'. Sila semak Project Settings > Environment Variables " +
+          "di Vercel dan pastikan TURSO_DATABASE_URL (dan TURSO_AUTH_TOKEN) " +
+          "ditanda untuk KETIGA-TIGA environment: Production, Preview, dan " +
+          "Development - bukan Production sahaja. Selepas tambah/kemaskini " +
+          "env var, anda perlu redeploy (env var baru tidak terpakai pada " +
+          "deployment sedia ada)."
+      );
+    }
     console.log("TURSO_DATABASE_URL tidak ditetapkan, migrate-turso dilangkau.");
     return;
   }
