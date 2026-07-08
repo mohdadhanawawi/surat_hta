@@ -82,10 +82,15 @@ async function main() {
     const sqlPath = path.join(MIGRATIONS_DIR, folder, "migration.sql");
     const sql = readFileSync(sqlPath, "utf-8");
 
-    const statements = sql
+    const sqlWithoutComments = sql
+      .split("\n")
+      .filter((line) => !line.trim().startsWith("--"))
+      .join("\n");
+
+    const statements = sqlWithoutComments
       .split(/;\s*(?:\n|$)/)
       .map((s) => s.trim())
-      .filter((s) => s.length > 0 && !s.startsWith("--"));
+      .filter((s) => s.length > 0);
 
     console.log(`Mengaplikasikan migration ${folder} (${statements.length} statement)...`);
     for (const [i, statement] of statements.entries()) {
