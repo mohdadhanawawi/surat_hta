@@ -19,7 +19,11 @@ export function mimeTypeFromFileName(fileName: string): string {
   return MIME_BY_EXT[ext] ?? "application/octet-stream";
 }
 
-const USE_BLOB = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+export const ALLOWED_UPLOAD_MIME_TYPES = Object.values(MIME_BY_EXT);
+
+export const MAX_UPLOAD_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
+export const USE_BLOB = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 
 const UPLOAD_DIR = path.resolve(
   /* turbopackIgnore: true */ process.cwd(),

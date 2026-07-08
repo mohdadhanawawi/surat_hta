@@ -9,7 +9,7 @@ export default async function NewSuratPage() {
       <h1 className="mb-6 text-lg font-semibold text-slate-900">
         Tambah Surat Baru
       </h1>
-      <NewSuratForm />
+      <NewSuratForm useBlob={Boolean(process.env.BLOB_READ_WRITE_TOKEN)} />
     </div>
   );
 }

@@ -2,18 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser, requireAdmin } from "@/lib/auth";
-import { saveUploadedFile } from "@/lib/storage";
+import {
+  saveUploadedFile,
+  ALLOWED_UPLOAD_MIME_TYPES,
+  MAX_UPLOAD_FILE_SIZE,
+} from "@/lib/storage";
 
-const ALLOWED_MIME = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
-
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+const ALLOWED_MIME = new Set(ALLOWED_UPLOAD_MIME_TYPES);
+const MAX_FILE_SIZE = MAX_UPLOAD_FILE_SIZE;
 
 const createSuratSchema = z.object({
   tajuk: z.string().min(1, "Tajuk surat diperlukan."),
@@ -85,7 +81,15 @@ export async function POST(request: NextRequest) {
   let fileName: string | undefined;
   let fileStoredName: string | undefined;
 
-  if (file instanceof File && file.size > 0) {
+  const preUploadedStoredName = formData.get("fileStoredName")?.toString();
+  const preUploadedFileName = formData.get("fileName")?.toString();
+
+  if (preUploadedStoredName && preUploadedFileName) {
+    // Fail sudah dimuat naik terus ke Vercel Blob dari pelayar (elak had
+    // saiz badan permintaan 4.5MB pada Vercel Functions).
+    fileName = preUploadedFileName;
+    fileStoredName = preUploadedStoredName;
+  } else if (file instanceof File && file.size > 0) {
     if (!ALLOWED_MIME.has(file.type)) {
       return NextResponse.json(
         { error: "Jenis fail tidak disokong. Sila muat naik PDF, imej, atau dokumen Word." },

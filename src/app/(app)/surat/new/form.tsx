@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
 import { KATEGORI_SURAT } from "@/lib/labels";
 
-export function NewSuratForm() {
+export function NewSuratForm({ useBlob }: { useBlob: boolean }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,27 @@ export function NewSuratForm() {
     }
 
     try {
+      const file = formData.get("file");
+
+      // Jika guna Vercel Blob, muat naik terus dari pelayar ke Blob dahulu
+      // (elak had saiz badan permintaan 4.5MB pada Vercel Functions).
+      if (useBlob && file instanceof File && file.size > 0) {
+        const ext = file.name.includes(".")
+          ? file.name.slice(file.name.lastIndexOf("."))
+          : "";
+        const storedName = `${crypto.randomUUID()}${ext}`;
+
+        const blob = await upload(storedName, file, {
+          access: "private",
+          handleUploadUrl: "/api/surat/upload",
+          contentType: file.type,
+        });
+
+        formData.delete("file");
+        formData.set("fileStoredName", blob.pathname);
+        formData.set("fileName", file.name);
+      }
+
       const res = await fetch("/api/surat", {
         method: "POST",
         body: formData,
