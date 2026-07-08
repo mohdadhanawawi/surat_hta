@@ -1,12 +1,6 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { prisma } from "../src/lib/prisma";
 import { hashPassword } from "../src/lib/password";
-
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL!.replace(/^file:/, ""),
-});
-const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const existing = await prisma.user.findUnique({

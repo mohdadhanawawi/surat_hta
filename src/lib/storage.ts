@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir, writeFile, readFile, unlink } from "fs/promises";
 import path from "path";
+import { put, get, del } from "@vercel/blob";
 
 export const MIME_BY_EXT: Record<string, string> = {
   ".pdf": "application/pdf",
@@ -18,6 +19,8 @@ export function mimeTypeFromFileName(fileName: string): string {
   return MIME_BY_EXT[ext] ?? "application/octet-stream";
 }
 
+const USE_BLOB = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+
 const UPLOAD_DIR = path.resolve(
   /* turbopackIgnore: true */ process.cwd(),
   process.env.UPLOAD_DIR ?? "./data/uploads"
@@ -26,12 +29,20 @@ const UPLOAD_DIR = path.resolve(
 export async function saveUploadedFile(
   file: File
 ): Promise<{ storedName: string; originalName: string }> {
-  await mkdir(UPLOAD_DIR, { recursive: true });
-
   const ext = path.extname(file.name);
   const storedName = `${randomUUID()}${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
+  if (USE_BLOB) {
+    await put(storedName, buffer, {
+      access: "private",
+      contentType: mimeTypeFromFileName(file.name),
+      addRandomSuffix: false,
+    });
+    return { storedName, originalName: file.name };
+  }
+
+  await mkdir(UPLOAD_DIR, { recursive: true });
   await writeFile(path.join(UPLOAD_DIR, storedName), buffer);
 
   return { storedName, originalName: file.name };
@@ -45,8 +56,23 @@ export function resolveUploadPath(storedName: string): string {
   return resolved;
 }
 
+export async function readUploadedFile(storedName: string): Promise<Buffer> {
+  if (USE_BLOB) {
+    const result = await get(storedName, { access: "private" });
+    if (!result) throw new Error("Fail tidak dijumpai.");
+    const arrayBuffer = await new Response(result.stream).arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
+  return readFile(resolveUploadPath(storedName));
+}
+
 export async function deleteUploadedFile(storedName: string): Promise<void> {
   try {
+    if (USE_BLOB) {
+      await del(storedName);
+      return;
+    }
     await unlink(resolveUploadPath(storedName));
   } catch {
     // fail silently jika fail sudah tiada

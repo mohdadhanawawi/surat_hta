@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { resolveUploadPath, mimeTypeFromFileName } from "@/lib/storage";
+import { readUploadedFile, mimeTypeFromFileName } from "@/lib/storage";
 import { janaRingkasanSurat, GeminiError } from "@/lib/gemini";
 
 export async function POST(
@@ -25,8 +24,7 @@ export async function POST(
   }
 
   try {
-    const filePath = resolveUploadPath(surat.fileStoredName);
-    const buffer = await readFile(filePath);
+    const buffer = await readUploadedFile(surat.fileStoredName);
     const mime = mimeTypeFromFileName(surat.fileStoredName);
 
     const ringkasan = await janaRingkasanSurat(buffer, mime);

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { resolveUploadPath, mimeTypeFromFileName } from "@/lib/storage";
+import { readUploadedFile, mimeTypeFromFileName } from "@/lib/storage";
 
 export async function GET(
   _request: NextRequest,
@@ -17,8 +16,7 @@ export async function GET(
   }
 
   try {
-    const filePath = resolveUploadPath(surat.fileStoredName);
-    const buffer = await readFile(filePath);
+    const buffer = await readUploadedFile(surat.fileStoredName);
     const mime = mimeTypeFromFileName(surat.fileStoredName);
 
     return new NextResponse(buffer as unknown as BodyInit, {
