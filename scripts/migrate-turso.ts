@@ -59,13 +59,37 @@ async function main() {
   );
   console.log("Jadual _migrations_log sedia.");
 
-  const applied = await withTimeout(
+  let applied = await withTimeout(
     client.execute("SELECT name FROM _migrations_log"),
     15000,
     "baca _migrations_log"
   );
-  const appliedNames = new Set(applied.rows.map((r) => r.name as string));
+  let appliedNames = new Set(applied.rows.map((r) => r.name as string));
   console.log(`${appliedNames.size} migration sudah diaplikasikan sebelum ini.`);
+
+  if (appliedNames.size > 0) {
+    const userTable = await withTimeout(
+      client.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='User'"
+      ),
+      15000,
+      "semak jadual User wujud"
+    );
+    if (userTable.rows.length === 0) {
+      console.log(
+        "_migrations_log kata migration sudah diaplikasikan, tetapi jadual " +
+          "'User' tidak wujud (kemungkinan rekod rosak daripada cubaan " +
+          "sebelum ini). Menetapkan semula _migrations_log dan mengaplikasikan " +
+          "semula semua migration..."
+      );
+      await withTimeout(
+        client.execute("DELETE FROM _migrations_log"),
+        15000,
+        "reset _migrations_log"
+      );
+      appliedNames = new Set();
+    }
+  }
 
   const folders = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
     .filter((d) => d.isDirectory())
