@@ -52,6 +52,24 @@ export default async function PenggunaPage() {
         </h2>
         <NewUserForm />
       </div>
+
+      <div className="border-t border-slate-200 pt-6">
+        <h2 className="mb-2 text-sm font-semibold text-slate-900">
+          Sandaran / Eksport Data
+        </h2>
+        <p className="mb-3 text-xs text-slate-500">
+          Muat turun semua data pengguna, surat, dan tindakan (termasuk
+          kandungan fail) sebagai satu fail JSON. Berguna untuk sandaran atau
+          memindahkan data ke pelayan lain.
+        </p>
+        <a
+          href="/api/admin/eksport"
+          download
+          className="inline-block rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Muat Turun Eksport Data
+        </a>
+      </div>
     </div>
   );
 }
